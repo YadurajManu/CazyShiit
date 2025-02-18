@@ -11,7 +11,7 @@ protocol DummyUser: Identifiable {
     var role: UserRole { get }
 }
 
-struct Doctor: DummyUser {
+struct Doctor: DummyUser, Hashable {
     let id: String
     let name: String
     let phoneNumber: String
@@ -22,9 +22,26 @@ struct Doctor: DummyUser {
     let experience: Int
     let availability: [DayOfWeek: [TimeSlot]]
     let rating: Double
+    
+    // Implement Hashable manually since Dictionary isn't Hashable by default
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+        hasher.combine(name)
+        hasher.combine(phoneNumber)
+        hasher.combine(email)
+        hasher.combine(password)
+        hasher.combine(role)
+        hasher.combine(specialization)
+        hasher.combine(experience)
+        hasher.combine(rating)
+    }
+    
+    static func == (lhs: Doctor, rhs: Doctor) -> Bool {
+        lhs.id == rhs.id
+    }
 }
 
-struct Patient: DummyUser {
+struct Patient: DummyUser, Hashable {
     let id: String
     let name: String
     let phoneNumber: String
@@ -34,6 +51,22 @@ struct Patient: DummyUser {
     let age: Int
     let medicalHistory: [DiseaseSpecialization]
     let appointments: [Appointment]
+    
+    // Implement Hashable manually since Array isn't Hashable by default
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+        hasher.combine(name)
+        hasher.combine(phoneNumber)
+        hasher.combine(email)
+        hasher.combine(password)
+        hasher.combine(role)
+        hasher.combine(age)
+        hasher.combine(medicalHistory)
+    }
+    
+    static func == (lhs: Patient, rhs: Patient) -> Bool {
+        lhs.id == rhs.id
+    }
 }
 
 // MARK: - Supporting Types
@@ -67,8 +100,10 @@ struct Appointment {
     let status: AppointmentStatus
 }
 
-enum AppointmentStatus {
-    case scheduled, completed, cancelled
+enum AppointmentStatus: String {
+    case scheduled = "Scheduled"
+    case completed = "Completed"
+    case cancelled = "Cancelled"
 }
 
 // MARK: - Dummy Data Manager
