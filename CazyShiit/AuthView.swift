@@ -18,11 +18,6 @@ struct AuthView: View {
         case phone, email, password
     }
     
-    enum UserRole: String {
-        case patient = "Patient"
-        case doctor = "Doctor"
-    }
-    
     // Constants for styling
     private let mainColor = Color(red: 0.0, green: 0.478, blue: 0.988)
     private let secondaryColor = Color(red: 0.2, green: 0.851, blue: 0.4)
@@ -301,10 +296,37 @@ struct AuthView: View {
         isLoading = true
         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
         
-        // Simulate API call
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+        // Authenticate using DummyDataManager
+        let (success, userId) = DummyDataManager.shared.authenticateUser(
+            phoneNumber: phoneNumber,
+            password: password,
+            role: selectedRole
+        )
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
             isLoading = false
-            // Handle success/failure here
+            
+            if success, let userId = userId {
+                // Handle successful authentication
+                print("Successfully authenticated user with ID: \(userId)")
+                if selectedRole == .doctor {
+                    if let doctor = DummyDataManager.shared.getDoctor(byId: userId) {
+                        print("Logged in as Doctor: \(doctor.name)")
+                        // Navigate to doctor dashboard
+                    }
+                } else {
+                    if let patient = DummyDataManager.shared.getPatient(byId: userId) {
+                        print("Logged in as Patient: \(patient.name)")
+                        // Navigate to patient dashboard
+                    }
+                }
+            } else {
+                withAnimation {
+                    showError = true
+                    errorMessage = "Invalid credentials. Please try again."
+                    UINotificationFeedbackGenerator().notificationOccurred(.error)
+                }
+            }
         }
     }
 }
@@ -312,7 +334,7 @@ struct AuthView: View {
 // MARK: - Supporting Views
 
 struct RoleSelectionButton: View {
-    let role: AuthView.UserRole
+    let role: UserRole
     let isSelected: Bool
     let action: () -> Void
     
