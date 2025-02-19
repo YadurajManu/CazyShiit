@@ -164,13 +164,9 @@ struct PatientDashboard: View {
                             )
                         } else {
                             ForEach(viewModel.upcomingAppointments.prefix(2), id: \.id) { appointment in
-                                AppointmentCard(appointment: appointment)
-                                    .contextMenu {
-                                        Button(role: .destructive) {
-                                            viewModel.cancelAppointment(appointment)
-                                        } label: {
-                                            Label("Cancel Appointment", systemImage: "xmark.circle")
-                                        }
+                                AppointmentRow(viewModel: viewModel, appointment: appointment)
+                                    .onTapGesture {
+                                        viewModel.selectedAppointment = appointment
                                     }
                             }
                         }
@@ -199,12 +195,39 @@ struct PatientDashboard: View {
                             HStack(spacing: 12) {
                                 ForEach(viewModel.patient.medicalHistory, id: \.self) { condition in
                                     ConditionCard(condition: condition)
+                                        .onTapGesture {
+                                            viewModel.selectedSpecialization = condition
+                                            viewModel.showBookAppointment = true
+                                        }
                                 }
                             }
                             .padding(.horizontal)
                         }
                     }
                     .padding(.top, 8)
+                    
+                    // Recommended Doctors
+                    if !viewModel.recommendedDoctors.isEmpty {
+                        VStack(spacing: 16) {
+                            Text("Recommended Doctors")
+                                .font(.system(size: 18, weight: .semibold))
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.horizontal)
+                            
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 16) {
+                                    ForEach(viewModel.recommendedDoctors, id: \.id) { doctor in
+                                        RecommendedDoctorCard(doctor: doctor) {
+                                            viewModel.showBookAppointment = true
+                                            viewModel.selectedSpecialization = doctor.specialization
+                                        }
+                                    }
+                                }
+                                .padding(.horizontal)
+                            }
+                        }
+                        .padding(.top, 8)
+                    }
                 }
                 .padding(.bottom, 24)
             }
@@ -217,8 +240,20 @@ struct PatientDashboard: View {
         .sheet(isPresented: $viewModel.showBookAppointment) {
             BookAppointmentView(viewModel: viewModel)
         }
+        .sheet(isPresented: $viewModel.showMedicalHistory) {
+            MedicalRecordsView(viewModel: viewModel)
+        }
+        .sheet(isPresented: $viewModel.showProfileSettings) {
+            ProfileSettingsView(viewModel: viewModel)
+        }
+        .sheet(isPresented: $viewModel.showAppointmentsList) {
+            AppointmentListView(viewModel: viewModel)
+        }
         .alert(viewModel.alertMessage, isPresented: $viewModel.showingAlert) {
             Button("OK", role: .cancel) {}
+        }
+        .navigationDestination(item: $viewModel.selectedAppointment) { appointment in
+            AppointmentDetailView(viewModel: viewModel, appointment: appointment)
         }
     }
 }
@@ -415,6 +450,122 @@ struct ConditionCard: View {
                 .shadow(color: Color.black.opacity(0.05),
                         radius: 15, x: 0, y: 5)
         )
+    }
+}
+
+struct RecommendedDoctorCard: View {
+    let doctor: Doctor
+    let action: () -> Void
+    
+    private let mainColor = Color(red: 0.0, green: 0.478, blue: 0.988)
+    
+    var body: some View {
+        Button(action: action) {
+            VStack(alignment: .leading, spacing: 12) {
+                ZStack {
+                    Circle()
+                        .fill(mainColor.opacity(0.1))
+                        .frame(width: 60, height: 60)
+                    
+                    Image(systemName: "person.circle.fill")
+                        .font(.system(size: 40))
+                        .foregroundColor(mainColor)
+                }
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Dr. \(doctor.name)")
+                        .font(.system(size: 16, weight: .semibold))
+                    
+                    Text(doctor.specialization.rawValue)
+                        .font(.system(size: 14))
+                        .foregroundColor(.secondary)
+                    
+                    HStack(spacing: 12) {
+                        Label("\(doctor.rating, specifier: "%.1f")", systemImage: "star.fill")
+                            .foregroundColor(.orange)
+                        
+                        Label("\(doctor.experience)+ years", systemImage: "clock.fill")
+                            .foregroundColor(.green)
+                    }
+                    .font(.system(size: 12))
+                }
+            }
+            .frame(width: 200)
+            .padding()
+            .background(Color(uiColor: .systemBackground))
+            .cornerRadius(16)
+        }
+    }
+}
+
+struct MedicalHistoryView: View {
+    @ObservedObject var viewModel: PatientDashboardViewModel
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        NavigationView {
+            List {
+                ForEach(viewModel.patient.medicalHistory, id: \.self) { condition in
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(condition.rawValue)
+                            .font(.headline)
+                        
+                        let doctors = DummyDataManager.shared.getDoctorsBySpecialization(condition)
+                        Text("\(doctors.count) Specialists Available")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(.vertical, 8)
+                }
+            }
+            .navigationTitle("Medical History")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+    }
+}
+
+struct ProfileSettingsView: View {
+    @ObservedObject var viewModel: PatientDashboardViewModel
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        NavigationView {
+            List {
+                Section("Personal Information") {
+                    DetailRow(title: "Name", value: viewModel.patient.name)
+                    DetailRow(title: "Age", value: "\(viewModel.patient.age) years")
+                    DetailRow(title: "Phone", value: viewModel.patient.phoneNumber)
+                    DetailRow(title: "Email", value: viewModel.patient.email)
+                }
+                
+                Section("Appointments") {
+                    DetailRow(title: "Total", value: "\(viewModel.totalAppointments)")
+                    DetailRow(title: "Completed", value: "\(viewModel.completedAppointments)")
+                    DetailRow(title: "Upcoming", value: "\(viewModel.upcomingAppointmentsCount)")
+                    DetailRow(title: "Cancelled", value: "\(viewModel.cancelledAppointmentsCount)")
+                }
+                
+                Section("Medical History") {
+                    ForEach(viewModel.patient.medicalHistory, id: \.self) { condition in
+                        Text(condition.rawValue)
+                    }
+                }
+            }
+            .navigationTitle("Profile")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
+        }
     }
 }
 

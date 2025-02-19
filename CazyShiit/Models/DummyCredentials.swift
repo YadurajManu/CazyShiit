@@ -93,11 +93,22 @@ struct TimeSlot: Hashable {
     let end: String
 }
 
-struct Appointment {
+struct Appointment: Hashable {
     let id: String
     let doctorId: String
     let date: Date
     let status: AppointmentStatus
+    
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+        hasher.combine(doctorId)
+        hasher.combine(date)
+        hasher.combine(status)
+    }
+    
+    static func == (lhs: Appointment, rhs: Appointment) -> Bool {
+        lhs.id == rhs.id
+    }
 }
 
 enum AppointmentStatus: String {

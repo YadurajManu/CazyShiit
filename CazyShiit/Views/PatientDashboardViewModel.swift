@@ -14,28 +14,48 @@ class PatientDashboardViewModel: ObservableObject {
     @Published var selectedDate = Date()
     @Published var showingAlert = false
     @Published var alertMessage = ""
+    @Published var showAppointmentDetails = false
+    @Published var selectedAppointment: Appointment?
+    @Published var showRescheduleSheet = false
+    @Published var showCancelConfirmation = false
     
     // Filtered and Sorted Appointments
     var upcomingAppointments: [Appointment] {
-        patient.appointments.filter { appointment in
-            appointment.status == .scheduled && appointment.date > Date()
-        }.sorted { $0.date < $1.date }
+        patient.appointments
+            .filter { appointment in
+                appointment.status == .scheduled && appointment.date > Date()
+            }
+            .sorted { $0.date < $1.date }
     }
     
     var pastAppointments: [Appointment] {
-        patient.appointments.filter { appointment in
-            appointment.status == .completed || appointment.date < Date()
-        }.sorted { $0.date > $1.date }
+        patient.appointments
+            .filter { appointment in
+                appointment.status == .completed || appointment.date < Date()
+            }
+            .sorted { $0.date > $1.date }
+    }
+    
+    var cancelledAppointments: [Appointment] {
+        patient.appointments
+            .filter { $0.status == .cancelled }
+            .sorted { $0.date > $1.date }
     }
     
     // Available Doctors
     var availableDoctors: [Doctor] {
-        if let specialization = selectedSpecialization {
-            return DummyDataManager.shared.getDoctorsBySpecialization(specialization)
-                .filter { searchText.isEmpty || $0.name.localizedCaseInsensitiveContains(searchText) }
-                .sorted { $0.rating > $1.rating }
-        }
-        return []
+        DummyDataManager.shared.doctors
+            .filter { doctor in
+                if let specialization = selectedSpecialization {
+                    return doctor.specialization == specialization
+                }
+                return true
+            }
+            .filter { searchText.isEmpty || 
+                $0.name.localizedCaseInsensitiveContains(searchText) ||
+                $0.specialization.rawValue.localizedCaseInsensitiveContains(searchText)
+            }
+            .sorted { $0.rating > $1.rating }
     }
     
     // Quick Stats
@@ -51,6 +71,21 @@ class PatientDashboardViewModel: ObservableObject {
         upcomingAppointments.count
     }
     
+    var cancelledAppointmentsCount: Int {
+        cancelledAppointments.count
+    }
+    
+    // Doctor Recommendations
+    var recommendedDoctors: [Doctor] {
+        // Get doctors based on patient's medical history
+        let specializations = Set(patient.medicalHistory)
+        return DummyDataManager.shared.doctors
+            .filter { specializations.contains($0.specialization) }
+            .sorted { $0.rating > $1.rating }
+            .prefix(3)
+            .map { $0 }
+    }
+    
     // Initialization
     init(patient: Patient) {
         self.patient = patient
@@ -63,6 +98,18 @@ class PatientDashboardViewModel: ObservableObject {
     // MARK: - Actions
     
     func bookAppointment(with doctor: Doctor, date: Date, reason: String) {
+        // Validate appointment time
+        guard date > Date() else {
+            showAlert("Please select a future date and time")
+            return
+        }
+        
+        // Check for conflicting appointments
+        if hasConflictingAppointment(at: date) {
+            showAlert("You already have an appointment at this time")
+            return
+        }
+        
         // Create new appointment
         let newAppointment = Appointment(
             id: UUID().uuidString,
@@ -72,30 +119,29 @@ class PatientDashboardViewModel: ObservableObject {
         )
         
         // Update patient's appointments
-        // Note: In a real app, this would be handled by a backend service
         var updatedAppointments = patient.appointments
         updatedAppointments.append(newAppointment)
         
         // Update patient
-        patient = Patient(
-            id: patient.id,
-            name: patient.name,
-            phoneNumber: patient.phoneNumber,
-            email: patient.email,
-            password: patient.password,
-            role: patient.role,
-            age: patient.age,
-            medicalHistory: patient.medicalHistory,
-            appointments: updatedAppointments
-        )
+        updatePatient(appointments: updatedAppointments)
         
         showAlert("Appointment booked successfully!")
         showBookAppointment = false
     }
     
     func cancelAppointment(_ appointment: Appointment) {
+        // Validate cancellation
+        guard appointment.status == .scheduled else {
+            showAlert("This appointment cannot be cancelled")
+            return
+        }
+        
+        guard appointment.date > Date() else {
+            showAlert("Past appointments cannot be cancelled")
+            return
+        }
+        
         // Update appointment status
-        // Note: In a real app, this would be handled by a backend service
         let updatedAppointments = patient.appointments.map { apt in
             if apt.id == appointment.id {
                 return Appointment(
@@ -109,6 +155,61 @@ class PatientDashboardViewModel: ObservableObject {
         }
         
         // Update patient
+        updatePatient(appointments: updatedAppointments)
+        showAlert("Appointment cancelled successfully")
+    }
+    
+    func rescheduleAppointment(_ appointment: Appointment, to newDate: Date) {
+        // Validate rescheduling
+        guard appointment.status == .scheduled else {
+            showAlert("This appointment cannot be rescheduled")
+            return
+        }
+        
+        guard newDate > Date() else {
+            showAlert("Please select a future date")
+            return
+        }
+        
+        guard !hasConflictingAppointment(at: newDate, excluding: appointment.id) else {
+            showAlert("You already have an appointment at this time")
+            return
+        }
+        
+        // Update appointment
+        let updatedAppointments = patient.appointments.map { apt in
+            if apt.id == appointment.id {
+                return Appointment(
+                    id: apt.id,
+                    doctorId: apt.doctorId,
+                    date: newDate,
+                    status: .scheduled
+                )
+            }
+            return apt
+        }
+        
+        // Update patient
+        updatePatient(appointments: updatedAppointments)
+        showAlert("Appointment rescheduled successfully")
+        showRescheduleSheet = false
+    }
+    
+    // MARK: - Helper Methods
+    
+    private func hasConflictingAppointment(at date: Date, excluding appointmentId: String? = nil) -> Bool {
+        let calendar = Calendar.current
+        return patient.appointments.contains { appointment in
+            guard appointment.status == .scheduled else { return false }
+            guard appointment.id != appointmentId else { return false }
+            
+            let appointmentDate = appointment.date
+            let difference = calendar.dateComponents([.minute], from: appointmentDate, to: date)
+            return abs(difference.minute ?? 0) < 30 // 30-minute buffer
+        }
+    }
+    
+    private func updatePatient(appointments: [Appointment]) {
         patient = Patient(
             id: patient.id,
             name: patient.name,
@@ -118,14 +219,23 @@ class PatientDashboardViewModel: ObservableObject {
             role: patient.role,
             age: patient.age,
             medicalHistory: patient.medicalHistory,
-            appointments: updatedAppointments
+            appointments: appointments
         )
-        
-        showAlert("Appointment cancelled successfully")
     }
     
-    private func showAlert(_ message: String) {
+    func showAlert(_ message: String) {
         alertMessage = message
         showingAlert = true
+    }
+    
+    func getDoctorName(for appointment: Appointment) -> String {
+        if let doctor = DummyDataManager.shared.getDoctor(byId: appointment.doctorId) {
+            return "Dr. \(doctor.name)"
+        }
+        return "Unknown Doctor"
+    }
+    
+    func getDoctor(for appointment: Appointment) -> Doctor? {
+        DummyDataManager.shared.getDoctor(byId: appointment.doctorId)
     }
 } 
