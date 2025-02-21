@@ -11,7 +11,7 @@ import SwiftUI
 struct CazyShiitApp: App {
     var body: some Scene {
         WindowGroup {
-            SplashScreenView()
+            OnboardingView()
         }
     }
 }
