@@ -1,5 +1,20 @@
 import SwiftUI
 
+// MARK: - Theme Colors
+struct AppTheme {
+    static let primaryColor = Color.blue
+    static let secondaryColor = Color.green
+    static let tertiaryColor = Color.purple
+    static let accentColor = Color.teal
+    static let backgroundColor = Color(uiColor: .systemBackground)
+    static let textColor = Color.primary
+    static let subtleColor = Color.secondary
+    
+    static let gradientColors = [primaryColor, accentColor, tertiaryColor]
+    static let particleColors = [primaryColor, accentColor, Color.mint]
+    static let glowColors = [primaryColor.opacity(0.5), accentColor.opacity(0.3)]
+}
+
 struct SplashScreen: View {
     @State private var isActive = false
     @State private var size = 0.7
@@ -18,22 +33,25 @@ struct SplashScreen: View {
     @State private var rippleScale: CGFloat = 0.5
     @State private var showShimmer = false
     @State private var shimmerOffset: CGFloat = -0.25
-    
-    // Colors
-    let primaryColor = Color(red: 0.0, green: 0.478, blue: 0.988)
-    let secondaryColor = Color(red: 0.2, green: 0.851, blue: 0.4)
-    let tertiaryColor = Color(red: 0.6, green: 0.2, blue: 0.988)
+    @State private var showScanEffect = false
+    @State private var showDataPoints = false
     
     // Medical symbols for morphing
     let medicalSymbols = ["cross.fill", "heart.fill", "staroflife.fill", "pills.fill"]
     @State private var currentSymbolIndex = 0
     
-    // Shimmer effect
+    let dataPoints = [
+        DataPoint(label: "Heart Rate", value: "72 BPM", color: .green),
+        DataPoint(label: "Blood Pressure", value: "120/80", color: .blue),
+        DataPoint(label: "SpO2", value: "98%", color: .cyan),
+        DataPoint(label: "Temperature", value: "98.6°F", color: .orange)
+    ]
+    
     var shimmer: some View {
         LinearGradient(
             gradient: Gradient(colors: [
                 .clear,
-                Color.white.opacity(0.2),
+                .white.opacity(0.2),
                 .clear
             ]),
             startPoint: .leading,
@@ -53,11 +71,11 @@ struct SplashScreen: View {
                 ))
         } else {
             ZStack {
-                // Background gradient
+                // MARK: - Background Layer
                 RadialGradient(
                     gradient: Gradient(colors: [
-                        primaryColor.opacity(0.2),
-                        Color(uiColor: .systemBackground)
+                        AppTheme.primaryColor.opacity(0.1),
+                        AppTheme.backgroundColor
                     ]),
                     center: .center,
                     startRadius: 2,
@@ -65,135 +83,64 @@ struct SplashScreen: View {
                 )
                 .ignoresSafeArea()
                 
-                // Enhanced DNA Animation with ripple effect
-                if showDNA {
-                    ZStack {
-                        // Ripple circles
-                        ForEach(0..<3) { index in
-                            Circle()
-                                .stroke(primaryColor.opacity(0.1))
-                                .frame(width: 300 + CGFloat(index * 50))
-                                .scaleEffect(showRipple ? 1.2 : 0.8)
-                                .opacity(showRipple ? 0 : 0.5)
-                                .animation(
-                                    Animation
-                                        .easeInOut(duration: 2)
-                                        .repeatForever(autoreverses: false)
-                                        .delay(Double(index) * 0.4),
-                                    value: showRipple
-                                )
-                        }
-                        
-                        DNAAnimation(offset: dnaOffset)
-                            .opacity(0.3)
-                    }
-                }
-                
-                // Particle effect
+                // MARK: - Particle Effect Layer
                 if showParticles {
                     ParticleEffectView(system: particleSystem)
-                        .opacity(0.5)
+                        .opacity(0.3)
                 }
                 
-                VStack {
+                // MARK: - DNA Animation Layer
+                if showDNA {
+                    DNAAnimation(offset: dnaOffset)
+                        .opacity(0.2)
+                        .frame(height: 100)
+                        .offset(y: 200)
+                }
+                
+                // MARK: - Main Content Layer
+                VStack(spacing: 30) {
                     Spacer()
                     
-                    // Logo container
+                    // Logo Container
                     ZStack {
-                        // Glowing circles with blur effect
-                        ForEach(0..<2) { index in
-                            Circle()
-                                .fill(index == 0 ? primaryColor : secondaryColor)
-                                .frame(width: 120, height: 120)
-                                .blur(radius: 20)
-                                .opacity(glowOpacity)
-                                .offset(x: CGFloat(index * 20))
-                        }
+                        // Glow circles
+                        Circle()
+                            .fill(AppTheme.primaryColor)
+                            .frame(width: 150, height: 150)
+                            .blur(radius: 30)
+                            .opacity(glowOpacity * 0.3)
                         
-                        // Rotating circles with gradient
-                        ForEach(0..<3) { index in
-                            Circle()
-                                .stroke(
-                                    AngularGradient(
-                                        colors: [primaryColor, secondaryColor, tertiaryColor],
-                                        center: .center
-                                    ),
-                                    lineWidth: 2
-                                )
-                                .frame(width: CGFloat(140 + (index * 30)), height: CGFloat(140 + (index * 30)))
-                                .rotationEffect(.degrees(rotationAngle + Double(index * 30)))
-                        }
-                        
-                        // Pulse rings with multiple layers
-                        ForEach(0..<2) { index in
-                            Circle()
-                                .stroke(primaryColor.opacity(0.3 - Double(index) * 0.1), lineWidth: 2)
-                                .frame(width: 180 + CGFloat(index * 20), height: 180 + CGFloat(index * 20))
-                                .scaleEffect(pulseScale)
-                        }
-                        
-                        // Main logo with glass effect
-                        VStack(spacing: 4) {
-                            HStack(spacing: 2) {
+                        // Logo content
+                        VStack(spacing: 8) {
+                            HStack(spacing: 4) {
                                 Text("AI")
-                                    .font(.system(size: 36, weight: .bold))
-                                    .foregroundColor(primaryColor)
+                                    .font(.system(size: 40, weight: .bold))
+                                    .foregroundColor(AppTheme.primaryColor)
                                 
-                                // Animated medical symbols with glow
-                                ZStack {
-                                    // Glow effect
-                                    Image(systemName: medicalSymbols[currentSymbolIndex])
-                                        .font(.system(size: 32))
-                                        .foregroundColor(primaryColor)
-                                        .blur(radius: 4)
-                                        .opacity(0.5)
-                                    
-                                    // Main symbol
-                                    Image(systemName: medicalSymbols[currentSymbolIndex])
-                                        .font(.system(size: 30))
-                                        .foregroundColor(primaryColor)
-                                        .rotationEffect(.degrees(rotationAngle))
-                                    
-                                    // Pulse effect
-                                    Circle()
-                                        .stroke(primaryColor.opacity(0.5), lineWidth: 2)
-                                        .frame(width: 50, height: 50)
-                                        .scaleEffect(showHeartbeat ? 1.5 : 1.0)
-                                        .opacity(showHeartbeat ? 0 : 1)
-                                }
+                                Image(systemName: medicalSymbols[currentSymbolIndex])
+                                    .font(.system(size: 32))
+                                    .foregroundColor(AppTheme.primaryColor)
+                                    .rotationEffect(.degrees(rotationAngle))
                             }
                             
                             Text("युष")
                                 .font(.system(size: 36, weight: .bold))
-                                .foregroundColor(.primary)
+                                .foregroundColor(AppTheme.textColor)
                         }
-                        .padding(24)
+                        .padding(30)
                         .background(
-                            ZStack {
-                                // Glassmorphism effect
-                                Color(uiColor: .systemBackground)
-                                    .opacity(0.8)
-                                    .blur(radius: 10)
-                                
-                                // Subtle gradient overlay
-                                LinearGradient(
-                                    colors: [
-                                        primaryColor.opacity(0.1),
-                                        .clear
-                                    ],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            }
-                            .clipShape(Circle())
+                            Circle()
+                                .fill(Color(uiColor: .systemBackground))
+                                .opacity(0.9)
+                                .shadow(color: AppTheme.primaryColor.opacity(0.2), radius: 20)
                         )
                         .overlay(
                             Circle()
                                 .stroke(
                                     LinearGradient(
                                         colors: [
-                                            primaryColor.opacity(0.5),
-                                            secondaryColor.opacity(0.3)
+                                            AppTheme.primaryColor.opacity(0.5),
+                                            AppTheme.secondaryColor.opacity(0.3)
                                         ],
                                         startPoint: .topLeading,
                                         endPoint: .bottomTrailing
@@ -201,92 +148,61 @@ struct SplashScreen: View {
                                     lineWidth: 1
                                 )
                         )
-                        .shadow(color: primaryColor.opacity(0.3), radius: 20)
                         .scaleEffect(size)
-                        .opacity(opacity)
                     }
                     
-                    // Heartbeat line with gradient and glow
-                    if showHeartbeat {
-                        ZStack {
-                            // Glow effect
-                            HeartbeatLine()
-                                .stroke(primaryColor, lineWidth: 6)
-                                .blur(radius: 8)
-                                .opacity(0.3)
-                            
-                            // Main line
-                            HeartbeatLine()
-                                .stroke(
-                                    LinearGradient(
-                                        colors: [primaryColor, secondaryColor],
-                                        startPoint: .leading,
-                                        endPoint: .trailing
-                                    ),
-                                    lineWidth: 3
-                                )
+                    // MARK: - Medical Scan Data
+                    if showScanEffect {
+                        VStack(spacing: 15) {
+                            // Data points in a grid
+                            LazyVGrid(columns: [
+                                GridItem(.flexible()),
+                                GridItem(.flexible())
+                            ], spacing: 15) {
+                                ForEach(dataPoints, id: \.label) { point in
+                                    DataPointView(point: point)
+                                        .transition(.scale.combined(with: .opacity))
+                                }
+                            }
+                            .padding(.horizontal)
                         }
-                        .frame(width: 200, height: 50)
-                        .offset(x: heartbeatOffset)
+                        .opacity(showDataPoints ? 1 : 0)
                     }
                     
                     Spacer()
                     
-                    // Loading Progress with enhanced visuals
-                    VStack(spacing: 12) {
-                        // Progress bar with glow
-                        GeometryReader { geometry in
-                            ZStack(alignment: .leading) {
-                                // Background track
-                                RoundedRectangle(cornerRadius: 8)
-                                    .fill(Color.gray.opacity(0.2))
-                                    .frame(height: 6)
-                                
-                                // Glowing progress
-                                RoundedRectangle(cornerRadius: 8)
-                                    .fill(
-                                        LinearGradient(
-                                            colors: [primaryColor, secondaryColor],
-                                            startPoint: .leading,
-                                            endPoint: .trailing
-                                        )
-                                    )
-                                    .frame(width: geometry.size.width * loadingProgress, height: 6)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 8)
-                                            .fill(primaryColor)
-                                            .blur(radius: 4)
-                                            .opacity(0.3)
-                                    )
-                            }
+                    // MARK: - Bottom Elements
+                    VStack(spacing: 20) {
+                        // Heartbeat line
+                        if showHeartbeat {
+                            HeartbeatLine()
+                                .stroke(
+                                    LinearGradient(
+                                        colors: [AppTheme.primaryColor, AppTheme.accentColor],
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    ),
+                                    lineWidth: 2
+                                )
+                                .frame(width: 200, height: 30)
+                                .offset(x: heartbeatOffset)
                         }
-                        .frame(width: 200, height: 6)
                         
-                        // Loading text with fade effect
-                        Text("Loading...")
+                        // Progress bar
+                        ProgressView(value: loadingProgress)
+                            .frame(width: 200)
+                            .tint(AppTheme.primaryColor)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .stroke(AppTheme.primaryColor.opacity(0.2), lineWidth: 1)
+                            )
+                        
+                        Text("Initializing AI Health System...")
                             .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.secondary)
+                            .foregroundColor(AppTheme.subtleColor)
                             .opacity(loadingProgress < 1.0 ? 1 : 0)
-                            .animation(.easeInOut(duration: 0.3), value: loadingProgress)
                     }
                     .padding(.bottom, 50)
-                }
-                
-                // Add shimmer effect over the logo
-                if showShimmer {
-                    shimmer
-                        .rotationEffect(.degrees(30))
-                        .blendMode(.screen)
-                }
-                
-                // Add floating medical icons
-                ForEach(0..<medicalSymbols.count) { index in
-                    Image(systemName: medicalSymbols[index])
-                        .font(.system(size: 16))
-                        .foregroundColor(primaryColor.opacity(0.3))
-                        .offset(x: CGFloat.random(in: -100...100),
-                                y: CGFloat.random(in: -200...200))
-                        .rotationEffect(.degrees(Double.random(in: -30...30)))
                 }
             }
             .onAppear {
@@ -307,6 +223,20 @@ struct SplashScreen: View {
         // Start shimmer animation
         withAnimation {
             showShimmer = true
+        }
+        
+        // Start scan effect with delay
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            withAnimation(.easeInOut(duration: 0.8)) {
+                showScanEffect = true
+            }
+        }
+        
+        // Show data points with delay
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            withAnimation(.easeInOut(duration: 1.0)) {
+                showDataPoints = true
+            }
         }
         
         // Continuous shimmer movement
@@ -415,80 +345,100 @@ struct SplashScreen: View {
 struct DNAAnimation: View {
     let offset: CGFloat
     
+    private func createHelixPath(in geometry: GeometryProxy, offset: CGFloat, phase: CGFloat = 0) -> Path {
+        let width = geometry.size.width
+        let height = geometry.size.height
+        let waveHeight: CGFloat = 20
+        let frequency: CGFloat = .pi * 2 / 100
+        
+        var path = Path()
+        path.move(to: CGPoint(x: 0, y: height / 2))
+        
+        for x in stride(from: 0, through: width, by: 1) {
+            let y = sin(frequency * x + offset + phase) * waveHeight + height / 2
+            path.addLine(to: CGPoint(x: x, y: y))
+        }
+        
+        return path
+    }
+    
+    private func createConnectingLines(in geometry: GeometryProxy, offset: CGFloat) -> Path {
+        let width = geometry.size.width
+        let height = geometry.size.height
+        let waveHeight: CGFloat = 20
+        let frequency: CGFloat = .pi * 2 / 100
+        
+        var path = Path()
+        
+        for x in stride(from: 0, through: width, by: 25) {
+            let y1 = sin(frequency * x + offset) * waveHeight + height / 2
+            let y2 = sin(frequency * x + offset + .pi) * waveHeight + height / 2
+            
+            path.move(to: CGPoint(x: x, y: y1))
+            path.addLine(to: CGPoint(x: x, y: y2))
+        }
+        
+        return path
+    }
+    
+    private func createDNADot(at position: CGPoint, color: Color) -> some View {
+        Circle()
+            .fill(color)
+            .frame(width: 4, height: 4)
+            .position(position)
+            .opacity(0.6)
+    }
+    
     var body: some View {
         GeometryReader { geometry in
             ZStack {
                 // First helix strand
-                Path { path in
-                    let width = geometry.size.width
-                    let height = geometry.size.height
-                    let waveHeight: CGFloat = 20
-                    let frequency: CGFloat = .pi * 2 / 100
-                    
-                    path.move(to: CGPoint(x: 0, y: height / 2))
-                    
-                    for x in stride(from: 0, through: width, by: 1) {
-                        let y = sin(frequency * x + offset) * waveHeight + height / 2
-                        path.addLine(to: CGPoint(x: x, y: y))
-                        
-                        // Add connecting lines every 25 points
-                        if Int(x) % 25 == 0 {
-                            path.move(to: CGPoint(x: x, y: y))
-                            let y2 = sin(frequency * x + offset + .pi) * waveHeight + height / 2
-                            path.addLine(to: CGPoint(x: x, y: y2))
-                            path.move(to: CGPoint(x: x, y: y))
-                        }
-                    }
-                }
-                .stroke(
-                    LinearGradient(
-                        colors: [primaryColor, secondaryColor],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    ),
-                    style: StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round)
-                )
+                createHelixPath(in: geometry, offset: offset)
+                    .stroke(
+                        LinearGradient(
+                            colors: [AppTheme.primaryColor, AppTheme.secondaryColor],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        ),
+                        style: StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round)
+                    )
                 
-                // Second helix strand (offset by π)
-                Path { path in
-                    let width = geometry.size.width
-                    let height = geometry.size.height
-                    let waveHeight: CGFloat = 20
-                    let frequency: CGFloat = .pi * 2 / 100
-                    
-                    path.move(to: CGPoint(x: 0, y: height / 2))
-                    
-                    for x in stride(from: 0, through: width, by: 1) {
-                        let y = sin(frequency * x + offset + .pi) * waveHeight + height / 2
-                        path.addLine(to: CGPoint(x: x, y: y))
-                    }
-                }
-                .stroke(
-                    LinearGradient(
-                        colors: [secondaryColor, tertiaryColor],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    ),
-                    style: StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round)
-                )
+                // Second helix strand
+                createHelixPath(in: geometry, offset: offset, phase: .pi)
+                    .stroke(
+                        LinearGradient(
+                            colors: [AppTheme.secondaryColor, AppTheme.tertiaryColor],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        ),
+                        style: StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round)
+                    )
+                
+                // Connecting lines
+                createConnectingLines(in: geometry, offset: offset)
+                    .stroke(
+                        AppTheme.primaryColor.opacity(0.3),
+                        style: StrokeStyle(lineWidth: 1, lineCap: .round)
+                    )
                 
                 // DNA dots
-                ForEach(0..<Int(geometry.size.width/25)) { index in
+                ForEach(0..<Int(geometry.size.width/25), id: \.self) { index in
                     let x = CGFloat(index) * 25
-                    let y1 = sin(2 * .pi * x / 100 + offset) * 20 + geometry.size.height / 2
-                    let y2 = sin(2 * .pi * x / 100 + offset + .pi) * 20 + geometry.size.height / 2
+                    let frequency: CGFloat = .pi * 2 / 100
+                    let y1 = sin(frequency * x + offset) * 20 + geometry.size.height / 2
+                    let y2 = sin(frequency * x + offset + .pi) * 20 + geometry.size.height / 2
                     
-                    Circle()
-                        .fill(primaryColor)
-                        .frame(width: 4, height: 4)
-                        .position(x: x, y: y1)
-                        .opacity(0.6)
-                    
-                    Circle()
-                        .fill(secondaryColor)
-                        .frame(width: 4, height: 4)
-                        .position(x: x, y: y2)
-                        .opacity(0.6)
+                    Group {
+                        createDNADot(
+                            at: CGPoint(x: x, y: y1),
+                            color: AppTheme.primaryColor
+                        )
+                        
+                        createDNADot(
+                            at: CGPoint(x: x, y: y2),
+                            color: AppTheme.secondaryColor
+                        )
+                    }
                 }
             }
         }
@@ -519,7 +469,7 @@ class ParticleSystem {
                 speed: Double.random(in: 0.5...2),
                 scale: Double.random(in: 0.2...0.7),
                 opacity: Double.random(in: 0.3...0.7),
-                color: [Color.blue, Color.green, Color.purple].randomElement() ?? .blue
+                color: AppTheme.particleColors.randomElement() ?? AppTheme.primaryColor
             )
         }
     }
@@ -584,6 +534,46 @@ struct HeartbeatLine: Shape {
         
         return path
     }
+}
+
+// MARK: - Data Point View
+struct DataPointView: View {
+    let point: DataPoint
+    
+    var body: some View {
+        HStack(spacing: 8) {
+            Circle()
+                .fill(point.color)
+                .frame(width: 8, height: 8)
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text(point.label)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(.gray)
+                
+                Text(point.value)
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(point.color)
+            }
+            Spacer()
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color(uiColor: .systemBackground))
+                .opacity(0.9)
+                .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+        )
+    }
+}
+
+// Update DataPoint struct to be identifiable
+struct DataPoint: Identifiable {
+    let id = UUID()
+    let label: String
+    let value: String
+    let color: Color
 }
 
 #Preview {

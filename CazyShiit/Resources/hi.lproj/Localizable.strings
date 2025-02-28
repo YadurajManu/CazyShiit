@@ -1,0 +1,44 @@
+// Common
+"Select Language" = "भाषा चुनें";
+"Done" = "पूर्ण";
+
+// Onboarding
+"Welcome to AIयुष" = "AIयुष में आपका स्वागत है";
+"Your Health, Our Priority" = "आपका स्वास्थ्य, हमारी प्राथमिकता";
+"Experience the future of healthcare" = "स्वास्थ्य सेवा का भविष्य अनुभव करें";
+"Smart Healthcare" = "स्मार्ट स्वास्थ्य सेवा";
+"AI-Powered Diagnosis" = "AI-संचालित निदान";
+"Complete Care" = "पूर्ण देखभाल";
+"Beyond Appointments" = "अपॉइंटमेंट से परे";
+"Get Started" = "शुरू करें";
+"Next" = "अगला";
+"Skip" = "छोड़ें";
+
+// Features
+"AI-Powered Health Recommendations" = "AI-संचालित स्वास्थ्य सिफारिशें";
+"24/7 Doctor Availability" = "24/7 डॉक्टर उपलब्धता";
+"Secure Medical Records" = "सुरक्षित चिकित्सा रिकॉर्ड";
+"Symptom Analysis" = "लक्षण विश्लेषण";
+"Specialist Matching" = "विशेषज्ञ मिलान";
+"Health Predictions" = "स्वास्थ्य भविष्यवाणियां";
+"Health Timeline" = "स्वास्थ्य टाइमलाइन";
+"Medicine Reminders" = "दवा रिमाइंडर";
+"Family Health Tracking" = "परिवार स्वास्थ्य ट्रैकिंग";
+
+// Medical Data
+"Heart Rate" = "हृदय गति";
+"Blood Pressure" = "रक्तचाप";
+"SpO2" = "ऑक्सीजन स्तर";
+"Temperature" = "तापमान";
+"Initializing AI Health System" = "AI स्वास्थ्य प्रणाली प्रारंभ हो रही है";
+
+// Statistics
+"Active Users" = "सक्रिय उपयोगकर्ता";
+"Doctors" = "डॉक्टर";
+"App Rating" = "ऐप रेटिंग";
+"Accuracy" = "सटीकता";
+"Avg. Response" = "औसत प्रतिक्रिया";
+"Support" = "सहायता";
+"Better Adherence" = "बेहतर अनुपालन";
+"Faster Care" = "तेज देखभाल";
+"Satisfaction" = "संतुष्टि"; 

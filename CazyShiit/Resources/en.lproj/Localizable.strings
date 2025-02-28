@@ -1,0 +1,44 @@
+// Common
+"Select Language" = "Select Language";
+"Done" = "Done";
+
+// Onboarding
+"Welcome to AIयुष" = "Welcome to AIयुष";
+"Your Health, Our Priority" = "Your Health, Our Priority";
+"Experience the future of healthcare" = "Experience the future of healthcare";
+"Smart Healthcare" = "Smart Healthcare";
+"AI-Powered Diagnosis" = "AI-Powered Diagnosis";
+"Complete Care" = "Complete Care";
+"Beyond Appointments" = "Beyond Appointments";
+"Get Started" = "Get Started";
+"Next" = "Next";
+"Skip" = "Skip";
+
+// Features
+"AI-Powered Health Recommendations" = "AI-Powered Health Recommendations";
+"24/7 Doctor Availability" = "24/7 Doctor Availability";
+"Secure Medical Records" = "Secure Medical Records";
+"Symptom Analysis" = "Symptom Analysis";
+"Specialist Matching" = "Specialist Matching";
+"Health Predictions" = "Health Predictions";
+"Health Timeline" = "Health Timeline";
+"Medicine Reminders" = "Medicine Reminders";
+"Family Health Tracking" = "Family Health Tracking";
+
+// Medical Data
+"Heart Rate" = "Heart Rate";
+"Blood Pressure" = "Blood Pressure";
+"SpO2" = "SpO2";
+"Temperature" = "Temperature";
+"Initializing AI Health System" = "Initializing AI Health System";
+
+// Statistics
+"Active Users" = "Active Users";
+"Doctors" = "Doctors";
+"App Rating" = "App Rating";
+"Accuracy" = "Accuracy";
+"Avg. Response" = "Avg. Response";
+"Support" = "Support";
+"Better Adherence" = "Better Adherence";
+"Faster Care" = "Faster Care";
+"Satisfaction" = "Satisfaction"; 

@@ -5,28 +5,30 @@ struct OnboardingView: View {
     @State private var isOnboardingComplete = false
     @State private var showLogo = false
     @State private var currentSymbolIndex = 0
+    @State private var showLanguageSelection = false
     @Namespace private var animation
     @Environment(\.colorScheme) private var colorScheme
+    @StateObject private var languageManager = LanguageManager.shared
     
     let medicalSymbols = ["heart.fill", "cross.case.fill", "staroflife.fill", "pills.fill"]
     let floatingIcons = ["syringe.fill", "thermometer.fill", "bandage.fill", "ear.fill", "lungs.fill", "brain.head.fill"]
     
     let onboardingData = [
         OnboardingPage(
-            title: "Welcome to AIयुष",
-            subtitle: "Your Health, Our Priority",
-            description: "Experience the future of healthcare with India's most intelligent appointment booking platform",
+            title: "Welcome to AIयुष".localized,
+            subtitle: "Your Health, Our Priority".localized,
+            description: "Experience the future of healthcare".localized,
             imageName: "heart.fill",
             secondaryImage: "cross.case.fill",
             features: [
-                "AI-Powered Health Recommendations",
-                "24/7 Doctor Availability",
-                "Secure Medical Records"
+                "AI-Powered Health Recommendations".localized,
+                "24/7 Doctor Availability".localized,
+                "Secure Medical Records".localized
             ],
             statistics: [
-                ImpactStatistic(value: "50K+", label: "Active Users"),
-                ImpactStatistic(value: "1000+", label: "Doctors"),
-                ImpactStatistic(value: "4.8", label: "App Rating")
+                ImpactStatistic(value: "50K+", label: "Active Users".localized),
+                ImpactStatistic(value: "1000+", label: "Doctors".localized),
+                ImpactStatistic(value: "4.8", label: "App Rating".localized)
             ],
             testimonial: Testimonial(
                 text: "AIयुष has revolutionized how I manage my practice. The AI recommendations are spot-on!",
@@ -130,23 +132,40 @@ struct OnboardingView: View {
                 .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
                 
                 VStack {
-                    // Top Skip Button
+                    // Top bar with language selection
                     HStack {
+                        Button(action: {
+                            showLanguageSelection = true
+                        }) {
+                            HStack {
+                                Text(languageManager.currentLanguage.flag)
+                                Text(languageManager.currentLanguage.name)
+                                    .font(.subheadline)
+                                    .foregroundColor(.gray)
+                            }
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(
+                                Capsule()
+                                    .fill(Color(uiColor: .systemBackground))
+                                    .shadow(color: Color.black.opacity(0.1), radius: 4)
+                            )
+                        }
+                        
                         Spacer()
+                        
                         if currentPage < onboardingData.count - 1 {
-                            Button(action: {
+                            Button("Skip".localized) {
                                 withAnimation(.spring()) {
                                     isOnboardingComplete = true
                                 }
-                            }) {
-                                Text("Skip")
-                                    .font(.system(size: 16, weight: .medium))
-                                    .foregroundColor(.gray)
-                                    .padding(.horizontal, 24)
-                                    .padding(.top, 20)
                             }
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(.gray)
                         }
                     }
+                    .padding(.horizontal, 24)
+                    .padding(.top, 20)
                     
                     Spacer()
                     
@@ -211,6 +230,10 @@ struct OnboardingView: View {
             }
             .onAppear {
                 startAnimations()
+            }
+            .sheet(isPresented: $showLanguageSelection) {
+                LanguageSelectionView()
+                    .environmentObject(languageManager)
             }
         }
     }

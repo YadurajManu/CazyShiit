@@ -9,9 +9,12 @@ import SwiftUI
 
 @main
 struct CazyShiitApp: App {
+    @StateObject private var languageManager = LanguageManager.shared
+    
     var body: some Scene {
         WindowGroup {
-            OnboardingView()
+            SplashScreen()
+                .environmentObject(languageManager)
         }
     }
 }
